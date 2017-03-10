@@ -605,6 +605,24 @@ def pageAlarmOptions() {
         multiple:       true,
         required:       false
     ]
+	
+    def inputColorBulbs = [
+        name: "colorBulbs",
+        type: "capability.colorControl",
+        title: "Which Colored bulbs?",
+        multiple: true,
+        required: false
+    ]
+    
+    def inputColorsOffOnClear = [
+    	name:           "colorOffOnClear",
+        type:           "bool",
+        title:          "Turn colored bulbs off on alarm clear?",
+        defaultValue:   true,
+        required:       true
+    ]
+
+    def colorsWithDisabled=["Disabled","Blue","Purple","Red","Pink","Orange","Yellow","Green","White"]
 
     def inputCameras = [
         name:           "cameras",
@@ -629,6 +647,23 @@ def pageAlarmOptions() {
         nextPage:   "pageSetup",
         uninstall:  false
     ]
+    
+    def inputAlertColor = [
+        name:           "alertColor",
+        type:           "enum",
+        title:          "Alert Color?",
+        options:      	 colorsWithDisabled,
+        required:       false,
+        defaultValue: 	"Disabled",
+        multiple: 		false
+    ]
+
+	def inputAlertColorBrightness = [
+        name: "alertColorBrightnessLevel", 
+        type: "number", 
+        title: "Color  Brightness Level (1-100)?", 
+        required:false, defaultValue:100
+    ]
 
     return dynamicPage(pageProperties) {
         section("Alarm Options") {
@@ -647,6 +682,12 @@ def pageAlarmOptions() {
         }
         section("'Hello, Home' Actions") {
             input inputHelloHome
+        }
+        section("Colored Bulbs") {
+            input inputColorBulbs
+            input inputAlertColor
+            input inputAlertColorBrightness
+            input inputColorsOffOnClear
         }
     }
 }
@@ -1125,6 +1166,17 @@ private def initialize() {
         state.armed = false
         state.stay = false
     }
+	if (settings.alertColorBrightnessLevel == null)
+    	settings.alertColorBrightnessLevel = 100
+    
+    if (settings.alertColorBrightnessLevel<1) {
+		settings.alertColorBrightnessLevel=1
+	} else if (settings.alertColorBrightnessLevel>100) {
+		settings.alertColorBrightnessLevel=100
+	}
+    
+    if (settings.alertColor == null)
+    	settings.alertColor = "Disabled"
 
     initZones()
     initButtons()
@@ -1150,6 +1202,11 @@ private def clearAlarm() {
             }
         }
         state.offSwitches = []
+    }
+    
+    if (settings.colorOffOnClear)
+    {
+        settings.colorBulbs*.off()
     }
 }
 
@@ -1641,6 +1698,47 @@ def activateAlarm() {
         settings.alarms*.both()
         break
     }
+    
+	//Initialize the hue and saturation
+	def color = 0
+	def saturation = 100
+
+    log.debug "in notify by color color = ${settings.alartColor}"
+    
+	//Set the hue and saturation for the specified color.
+    if (settings.alartColor != "Disabled")
+    {
+        switch(settings.alartColor) {
+
+            case "Blue":
+                color = 65
+                break;
+            case "Green":
+                color = 33
+                break;
+            case "Yellow":
+                color = 25
+                break;
+            case "Orange":
+                color = 10
+                break;
+            case "Purple":
+                color = 82
+                saturation = 100
+                break;
+            case "Pink":
+                color = 90.78
+                saturation = 67.84
+                break;
+            case "Red":
+                color = 0
+                break;
+	    }
+
+	    //Change the color of the light
+        settings.colorBulbs*.setColor([hue: color, saturation: saturation, level: settings.colorAlertBrightnessLevel])
+    }
+
 
     // Only turn on those switches that are currently off
     def switchesOn = settings.switches?.findAll { it?.currentSwitch == "off" }
