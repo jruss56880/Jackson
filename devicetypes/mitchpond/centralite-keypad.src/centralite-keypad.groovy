@@ -388,7 +388,7 @@ private getBatteryResult(rawValue) {
 		def minVolts = 2.5
 		def maxVolts = 3.0
 		def pct = (volts - minVolts) / (maxVolts - minVolts)
-		result.value = Math.min(100, (int) pct * 100)
+		result.value = Math.min(100, Math.round(pct * 100))
 		result.descriptionText = "${linkText} battery was ${result.value}%"
 	}
 
