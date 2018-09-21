@@ -559,8 +559,8 @@ def beep(def beepLength = settings.beepLength) {
 		beepLength = 0
 	}
 	def len = zigbee.convertToHexString(beepLength, 2)
-	List cmds = ["raw 0x501 {09 01 04 05${len}}", 'delay 200',
-				 "send 0x${device.deviceNetworkId} 1 1", 'delay 500']
+	List cmds = ["raw 0x501 {09 01 04 05${len}}",
+		     "send 0x${device.deviceNetworkId} 1 1", 'delay 100']
 	cmds
 }
 
